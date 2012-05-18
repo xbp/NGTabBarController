@@ -7,9 +7,18 @@
 //
 
 #import "NGColoredViewController.h"
+#import "NGTabBarController.h"
 #import <QuartzCore/QuartzCore.h>
 
+
 #define NGLogFunction() NSLog(@"Method called: %s", __FUNCTION__)
+
+
+@interface NGColoredViewController () {
+    BOOL _presentedModally;
+}
+
+@end
 
 @implementation NGColoredViewController
 
@@ -38,13 +47,15 @@
     blackView.backgroundColor = [UIColor blackColor];
     blackView.center = self.view.center;
     blackView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin
-                               | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+    | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     [self.view addSubview:blackView];
     
-    UIView *whiteView = [[UIView alloc] initWithFrame:CGRectMake(self.view.bounds.size.width - 120, 20, 100, 100)];
-    whiteView.backgroundColor = [UIColor whiteColor];
-    whiteView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
-    [self.view addSubview:whiteView];
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [button setTitle:@"Push Me" forState:UIControlStateNormal];
+    button.frame = CGRectMake(self.view.bounds.size.width - 120, 20, 100, 100);
+    button.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+    [button addTarget:self action:@selector(handleButtonPress:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:button];
     
     NGLogFunction();
 }
@@ -57,7 +68,7 @@
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
- 
+    
     NGLogFunction();
 }
 
@@ -99,6 +110,21 @@
     [super didRotateFromInterfaceOrientation:fromInterfaceOrientation];
     
     NGLogFunction();
+}
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - Private
+////////////////////////////////////////////////////////////////////////
+
+- (void)handleButtonPress:(id)sender {
+    if (_presentedModally) {
+        [self dismissModalViewControllerAnimated:YES];
+    } else {
+        NGColoredViewController *vc = [[NGColoredViewController alloc] initWithNibName:nil bundle:nil];
+        
+        vc->_presentedModally = YES;
+        [self.ng_tabBarController presentModalViewController:vc animated:YES];
+    }
 }
 
 @end

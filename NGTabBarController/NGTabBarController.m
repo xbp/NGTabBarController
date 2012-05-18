@@ -1,4 +1,5 @@
 #import "NGTabBarController.h"
+#import <objc/runtime.h>
 
 
 // the default width of the tabBar
@@ -232,6 +233,7 @@
             // remove old child view controller
             for (UIViewController *viewController in _viewControllers) {
                 [viewController removeFromParentViewController];
+                objc_setAssociatedObject(viewController, kNGTabBarControllerKey, nil, OBJC_ASSOCIATION_ASSIGN);
             }
         }
         
@@ -251,6 +253,7 @@
             viewController.view.frame = childViewControllerFrame;
             viewController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             viewController.view.clipsToBounds = YES;
+            objc_setAssociatedObject(viewController, kNGTabBarControllerKey, self, OBJC_ASSOCIATION_ASSIGN);
         }
         
         [self layout];

@@ -14,6 +14,9 @@
 #import "UIViewController+NGTabBarItem.h"
 
 
+#define kNGTabBarControllerKey      @"kNGTabBarControllerKey"
+
+
 /** NGTabBarController is a customized TabBar displayed on any side of the device */
 @interface NGTabBarController : UIViewController
 
