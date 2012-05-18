@@ -239,8 +239,16 @@
         _backgroundImage = backgroundImage;
         
         if (backgroundImage != nil) {
+            BOOL isResizable = NO;
+            
+            if ([backgroundImage respondsToSelector:@selector(capInsets)]) {
+                isResizable = !UIEdgeInsetsEqualToEdgeInsets(backgroundImage.capInsets,UIEdgeInsetsZero);
+            } else {
+                isResizable = backgroundImage.leftCapWidth > 0;
+            }
+            
             // is the image a non-resizable image?
-            if (UIEdgeInsetsEqualToEdgeInsets(backgroundImage.capInsets,UIEdgeInsetsZero)) {
+            if (!isResizable) {
                 self.backgroundView = [[UIView alloc] initWithFrame:self.bounds];
                 self.backgroundView.backgroundColor = [UIColor colorWithPatternImage:backgroundImage];
                 [self insertSubview:self.backgroundView atIndex:0];
