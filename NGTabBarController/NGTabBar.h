@@ -37,4 +37,6 @@ typedef enum {
 - (void)selectItemAtIndex:(NSUInteger)index;
 - (void)deselectSelectedItem;
 
+- (UIImageView *)imageViewRepresentation;
+
 @end

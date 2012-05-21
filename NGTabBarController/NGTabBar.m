@@ -291,6 +291,20 @@
     }
 }
 
+- (UIImageView *)imageViewRepresentation {
+    UIGraphicsBeginImageContext(self.bounds.size);
+	[self.layer renderInContext:UIGraphicsGetCurrentContext()];
+	UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+	UIGraphicsEndImageContext();
+    
+    UIImageView *imageView =  [[UIImageView alloc] initWithImage:image];
+    imageView.backgroundColor = [UIColor redColor];
+    imageView.frame = self.frame;
+    imageView.autoresizingMask = self.autoresizingMask;
+
+    return imageView;
+}
+
 ////////////////////////////////////////////////////////////////////////
 #pragma mark - Private
 ////////////////////////////////////////////////////////////////////////

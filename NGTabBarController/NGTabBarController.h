@@ -18,7 +18,7 @@
 
 
 /** NGTabBarController is a customized TabBar displayed on any side of the device */
-@interface NGTabBarController : UIViewController
+@interface NGTabBarController : UIViewController <UINavigationControllerDelegate>
 
 /** An array of the view controllers displayed by the tab bar */
 @property (nonatomic, copy) NSArray *viewControllers;

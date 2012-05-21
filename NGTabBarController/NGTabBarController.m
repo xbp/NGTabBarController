@@ -1,4 +1,5 @@
 #import "NGTabBarController.h"
+#import "UINavigationController+NGTabBarNavigationDelegate.h"
 #import <objc/runtime.h>
 
 
@@ -8,6 +9,9 @@
 #define kNGDefaultAnimationDuration           0.3f
 #define kNGScaleFactor                        0.98f
 #define kNGScaleDuration                      0.15f
+
+
+static char tabBarImageViewKey;
 
 
 @interface NGTabBarController () {
@@ -233,7 +237,15 @@
             // remove old child view controller
             for (UIViewController *viewController in _viewControllers) {
                 [viewController removeFromParentViewController];
+                
                 objc_setAssociatedObject(viewController, kNGTabBarControllerKey, nil, OBJC_ASSOCIATION_ASSIGN);
+                
+                // reset navigationControllerDelegate
+                if ([viewController isKindOfClass:[UINavigationController class]]) {
+                    UINavigationController *navigationController = (UINavigationController *)viewController;
+                    
+                    navigationController.delegate = navigationController.ng_originalNavigationControllerDelegate;
+                }
             }
         }
         
@@ -253,7 +265,18 @@
             viewController.view.frame = childViewControllerFrame;
             viewController.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
             viewController.view.clipsToBounds = YES;
+            // store read-only reference to tabBarController
             objc_setAssociatedObject(viewController, kNGTabBarControllerKey, self, OBJC_ASSOCIATION_ASSIGN);
+            
+            // set ourselve as navigationControllerDelegate and store the previous one
+            // that's because we need to know when a VC gets pushed and check if it has
+            // hidesBottomBarWhenPushed set
+            if ([viewController isKindOfClass:[UINavigationController class]]) {
+                UINavigationController *navigationController = (UINavigationController *)viewController;
+                
+                navigationController.ng_originalNavigationControllerDelegate = navigationController.delegate;
+                navigationController.delegate = self;
+            }
         }
         
         [self layout];
@@ -332,6 +355,53 @@
 
 - (NSTimeInterval)animationDuration {
     return self.animation != NGTabBarControllerAnimationNone ? _animationDuration : 0.f;
+}
+
+////////////////////////////////////////////////////////////////////////
+#pragma mark - UINavigationControllerDelegate
+////////////////////////////////////////////////////////////////////////
+
+- (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    // don't call the delegate if the original tabBarController is a subclass of
+    // NGTabBarController to prevent a infinite loop
+    if (![navigationController.ng_originalNavigationControllerDelegate isKindOfClass:[self class]]) {
+        [navigationController.ng_originalNavigationControllerDelegate navigationController:navigationController willShowViewController:viewController animated:animated];
+    }
+    
+    if (viewController.hidesBottomBarWhenPushed) {
+        NSUInteger indexOfViewControllerToPush = [navigationController.viewControllers indexOfObject:viewController];
+        NSInteger indexOfViewControllerThatGetsHidden = indexOfViewControllerToPush - 1;
+        
+        if (indexOfViewControllerThatGetsHidden >= 0) {
+            // add image of tabBar to the viewController's view to get a nice animation
+            UIViewController *viewControllerThatGetsHidden = [navigationController.viewControllers objectAtIndex:indexOfViewControllerThatGetsHidden];
+            UIImageView *tabBarImageRepresentation = [self.tabBar imageViewRepresentation];
+            
+            tabBarImageRepresentation.frame = CGRectMake(0.f,viewControllerThatGetsHidden.view.frame.origin.y + viewControllerThatGetsHidden.view.frame.size.height - tabBarImageRepresentation.frame.size.height,
+                                         tabBarImageRepresentation.frame.size.width,tabBarImageRepresentation.frame.size.height);
+
+            objc_setAssociatedObject(viewControllerThatGetsHidden, &tabBarImageViewKey, tabBarImageRepresentation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            [viewControllerThatGetsHidden.view addSubview:tabBarImageRepresentation];
+            [self setTabBarHidden:YES animated:NO];
+        }
+    }
+}
+
+- (void)navigationController:(UINavigationController *)navigationController didShowViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    // don't call the delegate if the original tabBarController is a subclass of
+    // NGTabBarController to prevent a infinite loop
+    if (![navigationController.ng_originalNavigationControllerDelegate isKindOfClass:[self class]]) {
+        [navigationController.ng_originalNavigationControllerDelegate navigationController:navigationController willShowViewController:viewController animated:animated];
+    }
+    
+    if (!viewController.hidesBottomBarWhenPushed) {
+        [self setTabBarHidden:NO animated:NO];
+
+        // Remove temporary tabBar image
+        UIView *view = objc_getAssociatedObject(viewController, &tabBarImageViewKey);
+        [view removeFromSuperview];
+        objc_setAssociatedObject(viewController, &tabBarImageViewKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////
