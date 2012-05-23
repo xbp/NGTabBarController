@@ -40,11 +40,13 @@
 - (void)setupForInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation; {
     if (UIInterfaceOrientationIsPortrait(interfaceOrientation)) {
         self.tabBarPosition = NGTabBarPositionBottom;
-        self.tabBar.showsItemHighlight = NO;
+        self.tabBar.drawItemHighlight = NO;
         self.tabBar.layoutStrategy = NGTabBarLayoutStrategyCentered;
+        self.tabBar.drawGloss = YES;
     } else {
         self.tabBarPosition = NGTabBarPositionLeft;
-        self.tabBar.showsItemHighlight = YES;
+        self.tabBar.drawItemHighlight = YES;
+        self.tabBar.drawGloss = NO;
         self.tabBar.layoutStrategy = NGTabBarLayoutStrategyStrungTogether;
     }
 }

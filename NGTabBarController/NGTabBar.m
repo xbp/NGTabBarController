@@ -32,7 +32,8 @@
 @synthesize backgroundImage = _backgroundImage;
 @synthesize backgroundView = _backgroundView;
 @synthesize itemHighlightView = _itemHighlightView;
-@synthesize showsItemHighlight = _showsItemHighlight;
+@synthesize drawItemHighlight = _drawItemHighlight;
+@synthesize drawGloss = _drawGloss;
 @synthesize itemHighlightColor = _itemHighlightColor;
 
 ////////////////////////////////////////////////////////////////////////
@@ -50,9 +51,9 @@
         _layoutStrategy = NGTabBarLayoutStrategyStrungTogether;
         _itemPadding = 0.f;
         _position = kNGTabBarPositionDefault;
-        _showsItemHighlight = YES;
+        _drawItemHighlight = YES;
+        _drawGloss = NO;
         
-        [self createGradient];
         [self updateItemHighlight];
     }
     
@@ -152,28 +153,40 @@
     
     if (self.backgroundImage == nil) {
         CGRect bounds = self.bounds;
-        CGPoint start;
-        CGPoint end;
         
-        // draw gradient
         CGContextSaveGState(context);
-        CGContextClipToRect(context, bounds);
         
-        if (self.position == NGTabBarPositionBottom) {
-            start = CGPointMake(bounds.origin.x, bounds.origin.y);
-            end = CGPointMake(bounds.origin.x, bounds.origin.y + bounds.size.height);
-        } else if (self.position == NGTabBarPositionTop) {
-            start = CGPointMake(bounds.origin.x, bounds.origin.y + bounds.size.height);
-            end = CGPointMake(bounds.origin.x, bounds.origin.y);
-        } else if (self.position == NGTabBarPositionLeft) {
-            start = CGPointMake(bounds.origin.x + bounds.size.width, bounds.origin.y);
-            end = CGPointMake(bounds.origin.x, bounds.origin.y);
-        } else if (self.position == NGTabBarPositionRight) {
-            start = CGPointMake(bounds.origin.x, bounds.origin.y);
-            end = CGPointMake(bounds.origin.x + bounds.size.width, bounds.origin.y);
+        if (self.drawGloss) {
+            CGPoint start;
+            CGPoint end;
+            
+            // draw gradient
+            
+            CGContextClipToRect(context, bounds);
+            CGContextSetFillColorWithColor(context, self.tintColor.CGColor);
+            CGContextFillRect(context, bounds);
+            
+            if (self.position == NGTabBarPositionBottom) {
+                start = CGPointMake(bounds.origin.x, bounds.origin.y);
+                end = CGPointMake(bounds.origin.x, bounds.origin.y + bounds.size.height);
+            } else if (self.position == NGTabBarPositionTop) {
+                start = CGPointMake(bounds.origin.x, bounds.origin.y + bounds.size.height);
+                end = CGPointMake(bounds.origin.x, bounds.origin.y);
+            } else if (self.position == NGTabBarPositionLeft) {
+                start = CGPointMake(bounds.origin.x + bounds.size.width, bounds.origin.y);
+                end = CGPointMake(bounds.origin.x, bounds.origin.y);
+            } else if (self.position == NGTabBarPositionRight) {
+                start = CGPointMake(bounds.origin.x, bounds.origin.y);
+                end = CGPointMake(bounds.origin.x + bounds.size.width, bounds.origin.y);
+            }
+            
+            CGContextDrawLinearGradient(context, _gradientRef, start, end, 0);
+            
+        } else {
+            CGContextSetFillColorWithColor(context, self.tintColor.CGColor);
+            CGContextFillRect(context, bounds);
         }
         
-        CGContextDrawLinearGradient(context, _gradientRef, start, end, 0);
         CGContextRestoreGState(context);
     }
 }
@@ -284,10 +297,22 @@
     }
 }
 
-- (void)setShowsItemHighlight:(BOOL)showsItemHighlight {
-    if (showsItemHighlight != _showsItemHighlight) {
-        _showsItemHighlight = showsItemHighlight;
+- (void)setDrawItemHighlight:(BOOL)drawItemHighlight {
+    if (drawItemHighlight != _drawItemHighlight) {
+        _drawItemHighlight = drawItemHighlight;
         [self updateItemHighlight];
+    }
+}
+
+- (void)setDrawGloss:(BOOL)drawGloss {
+    if (drawGloss != _drawGloss) {
+        _drawGloss = drawGloss;
+        
+        if (drawGloss && _gradientRef == NULL) {
+            [self createGradient];
+        }
+        
+        [self setNeedsDisplay];
     }
 }
 
@@ -301,7 +326,7 @@
     imageView.backgroundColor = [UIColor redColor];
     imageView.frame = self.frame;
     imageView.autoresizingMask = self.autoresizingMask;
-
+    
     return imageView;
 }
 
@@ -322,35 +347,21 @@
         CFRelease(_gradientRef);
     }
     
-    UIColor *baseColor = self.tintColor;
-    CGFloat hue, saturation, brightness, alpha;
-    NSArray *colors = nil;
-    
-    // TODO: This is a temporary workaround because getHue:saturation:brightness:alpha: is iOS 5 and up
-    // We need a better way of drawing a TabBar-Gradient
-    if ([baseColor respondsToSelector:@selector(getHue:saturation:brightness:alpha:)]) {
-        [baseColor getHue:&hue saturation:&saturation brightness:&brightness alpha:&alpha];
-        
-        colors = [NSArray arrayWithObjects:
-                  [UIColor colorWithHue:hue saturation:saturation brightness:brightness+0.2 alpha:alpha],
-                  [UIColor colorWithHue:hue saturation:saturation brightness:brightness+0.15 alpha:alpha],
-                  [UIColor colorWithHue:hue saturation:saturation brightness:brightness+0.1 alpha:alpha],
-                  baseColor, nil];
-    } else {
-        colors = [NSArray arrayWithObjects:
-                  baseColor,
-                  baseColor,
-                  baseColor,
-                  baseColor, nil];
-    }
+    NSArray *colors = [NSArray arrayWithObjects:
+                       [UIColor colorWithWhite:0.9f alpha:0.1f],
+                       [UIColor colorWithWhite:0.9f alpha:0.05f],
+                       [UIColor clearColor],
+                       [UIColor clearColor],
+                       nil];
     
     NSUInteger colorsCount = colors.count;
     CGColorSpaceRef colorSpace = CGColorGetColorSpace([[colors objectAtIndex:0] CGColor]);
     
-    NSArray *locations = [NSArray arrayWithObjects:[NSNumber numberWithFloat:0.0], 
-                          [NSNumber numberWithFloat:0.25], 
-                          [NSNumber numberWithFloat:0.49], 
-                          [NSNumber numberWithFloat:0.5], nil];
+    NSArray *locations = [NSArray arrayWithObjects:
+                          [NSNumber numberWithFloat:0.f],
+                          [NSNumber numberWithFloat:0.5f],
+                          [NSNumber numberWithFloat:0.5f],
+                          [NSNumber numberWithFloat:1.f], nil];
     CGFloat *gradientLocations = NULL;
     NSUInteger locationsCount = locations.count;
     
@@ -384,7 +395,7 @@
         
         self.itemHighlightView.backgroundColor = self.itemHighlightColor;
         self.itemHighlightView.frame = NGTabBarIsVertical(self.position) ? CGRectInset(itemRect, 2.f, 0.f) : CGRectInset(itemRect, 0.f, 2.f);
-        self.itemHighlightView.hidden = !self.showsItemHighlight;
+        self.itemHighlightView.hidden = !self.drawItemHighlight;
     } else {
         self.itemHighlightView.hidden = YES;
     }

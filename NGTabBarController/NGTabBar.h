@@ -30,7 +30,9 @@ typedef enum {
 /** defaults to nil */
 @property (nonatomic, strong) UIImage *backgroundImage;
 /** flag whether the semi-transparent item highlight is shown */
-@property (nonatomic, assign) BOOL showsItemHighlight;
+@property (nonatomic, assign) BOOL drawItemHighlight;
+/** flag whether tabbar-gloss should be drawn */
+@property (nonatomic, assign) BOOL drawGloss;
 /** defaults to white */
 @property (nonatomic, strong) UIColor *itemHighlightColor;
 
