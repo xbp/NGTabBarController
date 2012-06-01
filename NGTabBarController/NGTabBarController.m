@@ -304,8 +304,7 @@ static char tabBarImageViewKey;
         _tabBarPosition = tabBarPosition;
         self.tabBar.position = tabBarPosition;
         
-        [self setupTabBarForPosition:tabBarPosition];
-        [self.view setNeedsLayout];
+        [self layout];
     }
 }
 
