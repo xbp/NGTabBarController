@@ -11,6 +11,7 @@
 @interface NGTabBarItem : UIControl
 
 @property (nonatomic, strong) UIImage *image;
+@property (nonatomic, strong) UIImage *selectedImage;
 @property (nonatomic, copy) NSString *title;
 
 @property (nonatomic, strong) UIColor *selectedImageTintColor;

@@ -22,6 +22,7 @@
 @synthesize titleColor = _titleColor;
 @synthesize selectedTitleColor = _selectedTitleColor;
 @synthesize image = _image;
+@synthesize selectedImage = _selectedImage;
 @synthesize titleLabel = _titleLabel;
 
 ////////////////////////////////////////////////////////////////////////
@@ -93,40 +94,46 @@
         
         // draw either a selection gradient/glow or a regular image
         if (_selectedByUser) {
-            // setup shadow
-            CGSize shadowOffset = CGSizeMake(0.0f, 1.0f);
-            CGFloat shadowBlur = 3.0;
-            CGColorRef cgShadowColor = [[UIColor blackColor] CGColor];
-            
-            // setup gradient
-            CGFloat alpha0 = 0.8;
-            CGFloat alpha1 = 0.6;
-            CGFloat alpha2 = 0.0;
-            CGFloat alpha3 = 0.1;
-            CGFloat alpha4 = 0.5;
-            CGFloat locations[5] = {0,0.55,0.55,0.7,1};
-            
-            CGFloat components[20] = {1,1,1,alpha0,1,1,1,alpha1,1,1,1,alpha2,1,1,1,alpha3,1,1,1,alpha4};
-            CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-            CGGradientRef colorGradient = CGGradientCreateWithColorComponents(colorSpace, components, locations, (size_t)5);
-            CGColorSpaceRelease(colorSpace);
-            
-            // set shadow
-            CGContextSetShadowWithColor(context, shadowOffset, shadowBlur, cgShadowColor);
-            
-            // set transparency layer and clip to mask
-            CGContextBeginTransparencyLayer(context, NULL);
-            CGContextClipToMask(context, imageRect, [self.image CGImage]);
-            
-            // fill and end the transparency layer
-            CGContextSetFillColorWithColor(context, [self.selectedImageTintColor CGColor]);
-            CGContextFillRect(context, imageRect);
-            CGPoint start = CGPointMake(CGRectGetMidX(imageRect), imageRect.origin.y);
-            CGPoint end = CGPointMake(CGRectGetMidX(imageRect)-imageRect.size.height/4, imageRect.size.height+imageRect.origin.y);
-            CGContextDrawLinearGradient(context, colorGradient, end, start, 0);
-            CGContextEndTransparencyLayer(context);
-            
-            CGGradientRelease(colorGradient);
+            if (self.selectedImage != nil) {
+                CGContextDrawImage(context, imageRect, self.selectedImage.CGImage);
+            }
+            else {
+                // default to shadow + gradient
+                // setup shadow
+                CGSize shadowOffset = CGSizeMake(0.0f, 1.0f);
+                CGFloat shadowBlur = 3.0;
+                CGColorRef cgShadowColor = [[UIColor blackColor] CGColor];
+                
+                // setup gradient
+                CGFloat alpha0 = 0.8;
+                CGFloat alpha1 = 0.6;
+                CGFloat alpha2 = 0.0;
+                CGFloat alpha3 = 0.1;
+                CGFloat alpha4 = 0.5;
+                CGFloat locations[5] = {0,0.55,0.55,0.7,1};
+                
+                CGFloat components[20] = {1,1,1,alpha0,1,1,1,alpha1,1,1,1,alpha2,1,1,1,alpha3,1,1,1,alpha4};
+                CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+                CGGradientRef colorGradient = CGGradientCreateWithColorComponents(colorSpace, components, locations, (size_t)5);
+                CGColorSpaceRelease(colorSpace);
+                
+                // set shadow
+                CGContextSetShadowWithColor(context, shadowOffset, shadowBlur, cgShadowColor);
+                
+                // set transparency layer and clip to mask
+                CGContextBeginTransparencyLayer(context, NULL);
+                CGContextClipToMask(context, imageRect, [self.image CGImage]);
+                
+                // fill and end the transparency layer
+                CGContextSetFillColorWithColor(context, [self.selectedImageTintColor CGColor]);
+                CGContextFillRect(context, imageRect);
+                CGPoint start = CGPointMake(CGRectGetMidX(imageRect), imageRect.origin.y);
+                CGPoint end = CGPointMake(CGRectGetMidX(imageRect)-imageRect.size.height/4, imageRect.size.height+imageRect.origin.y);
+                CGContextDrawLinearGradient(context, colorGradient, end, start, 0);
+                CGContextEndTransparencyLayer(context);
+                
+                CGGradientRelease(colorGradient);
+            }
         } else {
             CGContextDrawImage(context, imageRect, self.image.CGImage);
         }
