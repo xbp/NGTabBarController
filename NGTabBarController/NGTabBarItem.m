@@ -140,6 +140,23 @@
         
         CGContextRestoreGState(context);
     }
+    else
+    {
+        if (_selectedByUser && self.selectedImage != nil)
+        {
+            CGContextSaveGState(context);
+            
+            // flip the coordinates system
+            CGContextTranslateCTM(context, 0.f, bounds.size.height);
+            CGContextScaleCTM(context, 1.f, -1.f);
+            
+            CGSize s = self.selectedImage.size;
+            CGContextDrawImage(context, CGRectMake(0, 3.f, s.width, s.height), self.selectedImage.CGImage);
+            
+            CGContextRestoreGState(context);
+        }
+    }
+    
 }
 
 ////////////////////////////////////////////////////////////////////////
